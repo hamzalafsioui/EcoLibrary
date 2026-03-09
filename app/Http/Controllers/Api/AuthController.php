@@ -31,5 +31,16 @@ class AuthController extends Controller
         return response()->json(['user' => $user], 201);
     }
 
+    public function login(Request $request)
+    {
+        $credentials = $request->only('email', 'password');
+        if (Auth::attempt($credentials)) {
+            $user = User::where("email", $request->email)->first();
+            $token = $user->createToken("personal access token")->plainTextToken;
+            $user->token = $token;
+            return response()->json(["user" => $user]);
+        }
+        return response()->json(["user" => "These credentials does not match our records"]);
+    }
    
 }
