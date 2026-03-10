@@ -1,8 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\BookController;
+use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\AuthController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\BookController;
 use Symfony\Component\HttpFoundation\Request;
 
 // Route::post('/tokens/create', function(Request $request){
@@ -21,5 +22,11 @@ Route::post("logout", [AuthController::class, "logout"]);
 
 // Protect book routes with Sanctum
 Route::middleware('auth:sanctum')->group(function () {
+
+    Route::get('books/popular', [BookController::class, 'popular']);
+    Route::get('books/new-arrivals', [BookController::class, 'newArrivals']);
+    Route::get('books/stats', [BookController::class, 'stats']);
+
     Route::apiResource('books', BookController::class);
+    Route::apiResource('categories', CategoryController::class);
 });
