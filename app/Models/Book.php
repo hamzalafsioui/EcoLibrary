@@ -11,6 +11,16 @@ class Book extends Model
     protected $fillable = [
         'title',
         'author',
-        'year'
+        'year',
+        'category_id',
+        'views_count',
+        'is_available',
+        'total_count',
+        'degraded_count',
     ];
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
 }
