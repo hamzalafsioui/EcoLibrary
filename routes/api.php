@@ -4,29 +4,40 @@ use App\Http\Controllers\Api\BookController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\AuthController;
 use Illuminate\Support\Facades\Route;
-use Symfony\Component\HttpFoundation\Request;
 
-// Route::post('/tokens/create', function(Request $request){
-//     $request->validate([
-//         'token_name' => 'required|string|max:255'
-//     ]);
+// ======================================== Public auth routes ========================================
+Route::post('register', [AuthController::class, 'register']);
+Route::post('login',    [AuthController::class, 'login']);
 
-//     $token = $request->user()->createToken($request->token_name);
-
-//     return ['token' => $token->plainTextToken];
-// });
-
-Route::post("login", [AuthController::class, "login"]);
-Route::post("register", [AuthController::class, "register"]);
-Route::post("logout", [AuthController::class, "logout"]);
-
-// Protect book routes with Sanctum
+// All authenticated routes
 Route::middleware('auth:sanctum')->group(function () {
 
-    Route::get('books/popular', [BookController::class, 'popular']);
-    Route::get('books/new-arrivals', [BookController::class, 'newArrivals']);
-    Route::get('books/stats', [BookController::class, 'stats']);
+    // Logout (requires valid token)
+    Route::post('logout', [AuthController::class, 'logout']);
 
-    Route::apiResource('books', BookController::class);
-    Route::apiResource('categories', CategoryController::class);
+    // ======================================== Reader routes (any authenticated user) ========================================
+    Route::get('books',             [BookController::class, 'index']);
+    Route::get('books/popular',     [BookController::class, 'popular']);
+    Route::get('books/new-arrivals', [BookController::class, 'newArrivals']);
+    Route::get('books/stats',       [BookController::class, 'stats'])->middleware('admin');
+    Route::get('books/{id}',        [BookController::class, 'show']);
+
+    Route::get('categories',        [CategoryController::class, 'index']);
+    Route::get('categories/{id}',   [CategoryController::class, 'show']);
+
+    // ======================================== Admin routes ========================================
+    Route::middleware('admin')->group(function () {
+
+        // Books management
+        Route::post('books',               [BookController::class, 'store']);
+        Route::put('books/{id}',           [BookController::class, 'update']);
+        Route::patch('books/{id}',         [BookController::class, 'update']);
+        Route::delete('books/{id}',        [BookController::class, 'destroy']);
+
+        // Categories management
+        Route::post('categories',          [CategoryController::class, 'store']);
+        Route::put('categories/{id}',      [CategoryController::class, 'update']);
+        Route::patch('categories/{id}',    [CategoryController::class, 'update']);
+        Route::delete('categories/{id}',   [CategoryController::class, 'destroy']);
+    });
 });
