@@ -9,9 +9,20 @@ use Illuminate\Http\Request;
 class BookController extends Controller
 {
     /**
-     * List books with optional filters:
-     *   ?category_id=1       => filter by category id
-     *   ?search=compost      => search by title OR category name
+     * @OA\Get(
+     *     path="/api/books",
+     *     summary="List all books",
+     *     description="List books with optional filters",
+     *     tags={"Books"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(name="category_id", in="query", required=false, description="Filter by category ID", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="search", in="query", required=false, description="Search by title or category name", @OA\Schema(type="string")),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of books",
+     *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/Book"))
+     *     )
+     * )
      */
     public function index(Request $request)
     {
@@ -35,7 +46,17 @@ class BookController extends Controller
     }
 
     /**
-     * Top 10 most-viewed books.
+     * @OA\Get(
+     *     path="/api/books/popular",
+     *     summary="Top 10 most-viewed books",
+     *     tags={"Books"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of popular books",
+     *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/Book"))
+     *     )
+     * )
      */
     public function popular()
     {
@@ -48,7 +69,17 @@ class BookController extends Controller
     }
 
     /**
-     * 10 most recently added books.
+     * @OA\Get(
+     *     path="/api/books/new-arrivals",
+     *     summary="10 most recently added books",
+     *     tags={"Books"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of newest books",
+     *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/Book"))
+     *     )
+     * )
      */
     public function newArrivals()
     {
@@ -61,7 +92,23 @@ class BookController extends Controller
     }
 
     /**
-     * Admin stats: total, most viewed, degraded sum, available count.
+     * @OA\Get(
+     *     path="/api/books/stats",
+     *     summary="Admin stats for books",
+     *     tags={"Books"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Books statistics",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="total_books", type="integer", example=150),
+     *             @OA\Property(property="most_viewed", ref="#/components/schemas/Book"),
+     *             @OA\Property(property="degraded_count", type="integer", example=25),
+     *             @OA\Property(property="available_count", type="integer", example=120)
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="Unauthorized (Not admin)")
+     * )
      */
     public function stats()
     {
@@ -74,7 +121,27 @@ class BookController extends Controller
     }
 
     /**
-     * Create a new book (admin only).
+     * @OA\Post(
+     *     path="/api/books",
+     *     summary="Create a new book (Admin only)",
+     *     tags={"Books"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"title","author","category_id"},
+     *             @OA\Property(property="title", type="string", example="The Alchemist"),
+     *             @OA\Property(property="author", type="string", example="Paulo Coelho"),
+     *             @OA\Property(property="year", type="integer", example=1988),
+     *             @OA\Property(property="category_id", type="integer", example=1),
+     *             @OA\Property(property="total_count", type="integer", example=10),
+     *             @OA\Property(property="degraded_count", type="integer", example=0)
+     *         )
+     *     ),
+     *     @OA\Response(response=201, description="Book created", @OA\JsonContent(ref="#/components/schemas/Book")),
+     *     @OA\Response(response=422, description="Validation errors"),
+     *     @OA\Response(response=403, description="Unauthorized (Not admin)")
+     * )
      */
     public function store(Request $request)
     {
@@ -97,7 +164,16 @@ class BookController extends Controller
     }
 
     /**
-     * Show a single book and increment its view counter.
+     * @OA\Get(
+     *     path="/api/books/{id}",
+     *     summary="Get a specific book",
+     *     description="Show a single book and increment its view counter.",
+     *     tags={"Books"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, description="Book ID", @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Book details", @OA\JsonContent(ref="#/components/schemas/Book")),
+     *     @OA\Response(response=404, description="Book not found")
+     * )
      */
     public function show($id)
     {
@@ -107,7 +183,27 @@ class BookController extends Controller
     }
 
     /**
-     * Update a book (admin only).
+     * @OA\Put(
+     *     path="/api/books/{id}",
+     *     summary="Update a book (Admin only)",
+     *     tags={"Books"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, description="Book ID", @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="title", type="string", example="The Alchemist - Updated"),
+     *             @OA\Property(property="author", type="string", example="Paulo Coelho"),
+     *             @OA\Property(property="year", type="integer", example=1990),
+     *             @OA\Property(property="category_id", type="integer", example=1),
+     *             @OA\Property(property="total_count", type="integer", example=12),
+     *             @OA\Property(property="degraded_count", type="integer", example=2)
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Book updated", @OA\JsonContent(ref="#/components/schemas/Book")),
+     *     @OA\Response(response=404, description="Book not found"),
+     *     @OA\Response(response=422, description="Validation errors")
+     * )
      */
     public function update(Request $request, $id)
     {
@@ -133,7 +229,15 @@ class BookController extends Controller
     }
 
     /**
-     * Delete a book (admin only).
+     * @OA\Delete(
+     *     path="/api/books/{id}",
+     *     summary="Delete a book (Admin only)",
+     *     tags={"Books"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, description="Book ID", @OA\Schema(type="integer")),
+     *     @OA\Response(response=204, description="Book deleted"),
+     *     @OA\Response(response=404, description="Book not found")
+     * )
      */
     public function destroy($id)
     {
