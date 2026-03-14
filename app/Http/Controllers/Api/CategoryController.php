@@ -64,12 +64,22 @@ class CategoryController extends Controller
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(name="id", in="path", required=true, description="Category ID", @OA\Schema(type="integer")),
      *     @OA\Response(response=200, description="Category details with books", @OA\JsonContent(ref="#/components/schemas/Category")),
-     *     @OA\Response(response=404, description="Category not found")
+     *     @OA\Response(
+     *         response=404,
+     *         description="Category not found",
+     *         @OA\JsonContent(@OA\Property(property="message", type="string", example="no category found with id 1"))
+     *     )
      * )
      */
     public function show(string $id)
     {
-        return Category::with('books')->findOrFail($id);
+        $category = Category::with('books')->find($id);
+
+        if (!$category) {
+            return response()->json(['message' => "no category found with id {$id}"], 404);
+        }
+
+        return response()->json($category);
     }
 
     /**
@@ -87,13 +97,21 @@ class CategoryController extends Controller
      *         )
      *     ),
      *     @OA\Response(response=200, description="Category updated", @OA\JsonContent(ref="#/components/schemas/Category")),
-     *     @OA\Response(response=404, description="Category not found"),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Category not found",
+     *         @OA\JsonContent(@OA\Property(property="message", type="string", example="no category found with id 1"))
+     *     ),
      *     @OA\Response(response=422, description="Validation errors")
      * )
      */
     public function update(Request $request, string $id)
     {
-        $category = Category::findOrFail($id);
+        $category = Category::find($id);
+
+        if (!$category) {
+            return response()->json(['message' => "no category found with id {$id}"], 404);
+        }
 
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255|unique:categories,name,' . $id,
@@ -112,7 +130,11 @@ class CategoryController extends Controller
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(name="id", in="path", required=true, description="Category ID", @OA\Schema(type="integer")),
      *     @OA\Response(response=204, description="Category deleted"),
-     *     @OA\Response(response=404, description="Category not found"),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Category not found",
+     *         @OA\JsonContent(@OA\Property(property="message", type="string", example="no category found with id 1"))
+     *     ),
      *     @OA\Response(
      *         response=422,
      *         description="Cannot delete category with books",
@@ -122,7 +144,11 @@ class CategoryController extends Controller
      */
     public function destroy(string $id)
     {
-        $category = Category::findOrFail($id);
+        $category = Category::find($id);
+
+        if (!$category) {
+            return response()->json(['message' => "no category found with id {$id}"], 404);
+        }
 
         if ($category->books()->count() > 0) {
             return response()->json([

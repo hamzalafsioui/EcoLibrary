@@ -171,13 +171,21 @@ class BookController extends Controller
      *     tags={"Books"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(name="id", in="path", required=true, description="Book ID", @OA\Schema(type="integer")),
-     *     @OA\Response(response=200, description="Book details", @OA\JsonContent(ref="#/components/schemas/Book")),
-     *     @OA\Response(response=404, description="Book not found")
+     *     @OA\Response(
+     *         response=404,
+     *         description="Book not found",
+     *         @OA\JsonContent(@OA\Property(property="message", type="string", example="no book found with id 1"))
+     *     )
      * )
      */
     public function show($id)
     {
-        $book = Book::with('category')->findOrFail($id);
+        $book = Book::with('category')->find($id);
+
+        if (!$book) {
+            return response()->json(['message' => "no book found with id {$id}"], 404);
+        }
+
         $book->increment('views_count');
         return response()->json($book);
     }
@@ -201,13 +209,21 @@ class BookController extends Controller
      *         )
      *     ),
      *     @OA\Response(response=200, description="Book updated", @OA\JsonContent(ref="#/components/schemas/Book")),
-     *     @OA\Response(response=404, description="Book not found"),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Book not found",
+     *         @OA\JsonContent(@OA\Property(property="message", type="string", example="no book found with id 1"))
+     *     ),
      *     @OA\Response(response=422, description="Validation errors")
      * )
      */
     public function update(Request $request, $id)
     {
-        $book = Book::findOrFail($id);
+        $book = Book::find($id);
+
+        if (!$book) {
+            return response()->json(['message' => "no book found with id {$id}"], 404);
+        }
 
         $validated = $request->validate([
             'title'          => 'sometimes|required|string|max:255',
@@ -236,12 +252,22 @@ class BookController extends Controller
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(name="id", in="path", required=true, description="Book ID", @OA\Schema(type="integer")),
      *     @OA\Response(response=204, description="Book deleted"),
-     *     @OA\Response(response=404, description="Book not found")
+     *     @OA\Response(
+     *         response=404,
+     *         description="Book not found",
+     *         @OA\JsonContent(@OA\Property(property="message", type="string", example="no book found with id 1"))
+     *     )
      * )
      */
     public function destroy($id)
     {
-        Book::destroy($id);
+        $book = Book::find($id);
+
+        if (!$book) {
+            return response()->json(['message' => "no book found with id {$id}"], 404);
+        }
+
+        $book->delete();
         return response()->json(null, 204);
     }
 }
